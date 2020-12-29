@@ -91,11 +91,11 @@ public class ThreeCPaymentController {
         // do something
     }
 
-    @GetMapping(value = "refund/{txnId}")
-    public ResponseEntity<RefundResult> refund(@PathVariable String txnId) throws Exception {
+    @GetMapping(value = "reverse-capture/{txnId}")
+    public ResponseEntity<RefundResult> reverseCapture(@PathVariable String txnId) throws Exception {
         RefundResult response = null;
         try {
-            response = threeCService.refund(txnId);
+            response = threeCService.reverseCapture(txnId);
         } catch (Exception e) {
             e.printStackTrace();
 

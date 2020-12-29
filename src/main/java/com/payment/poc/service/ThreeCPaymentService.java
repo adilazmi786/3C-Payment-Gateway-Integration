@@ -114,7 +114,7 @@ public class ThreeCPaymentService {
      * @return Refund Result
      * @throws Exception
      */
-    public RefundResult refund(String txnId) throws Exception {
+    public RefundResult reverseCapture(String txnId) throws Exception {
 
         try {
             String url = "https://web2payuat.3cint.com/mxg/service/_2011_02_v5_1_0/Pay.asmx";
@@ -159,10 +159,10 @@ public class ThreeCPaymentService {
                     + "1067"
                     + "</tem:trx_merchant_reference> <tem:trx_amount_currency_code>GBP</tem:trx_amount_currency_code> <tem:trx_amount_value>"
                     + "1300"
-                    + "</tem:trx_amount_value> <tem:template_id /> qikserve.xml <tem:posturl_success>http://localhost:8080/threecpay/success</tem:posturl_success> <tem:posturl_failure>http://localhost:8080/threecpay/failure</tem:posturl_failure> <tem:service_action>InitialiseServiceSoap</tem:service_action> <tem:trx_options>G</tem:trx_options> <tem:XXX_IPGSESSION_XXX>"+ipgSession+"</tem:XXX_IPGSESSION_XXX> </tem:Initialise> </x:Body> </x:Envelope>";
+                    + "</tem:trx_amount_value> <tem:template_id /> qikserve.xml <tem:posturl_success>http://localhost:8080/threecpay/success</tem:posturl_success> <tem:posturl_failure>http://localhost:8080/threecpay/failure</tem:posturl_failure> <tem:service_action>authorise</tem:service_action> <tem:trx_options>G</tem:trx_options> <tem:XXX_IPGSESSION_XXX>"+ipgSession+"</tem:XXX_IPGSESSION_XXX> </tem:Initialise> </x:Body> </x:Envelope>";
 
             String contentType = "text/xml; charset=utf-8";
-            String soapAction = "http://web2pay.com/5.0/2009/11/5.0.0/InitialiseServiceSoap";
+            String soapAction = "http://web2pay.com/5.0/2009/11/5.0.0/authorise";
             StringBuffer response = ThreeCHelper.getXMLResponse(url, xml, contentType, soapAction, "POST");
             return response.toString();
         } catch (Exception e) {
