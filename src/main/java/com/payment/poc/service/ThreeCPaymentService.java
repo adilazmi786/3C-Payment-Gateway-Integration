@@ -5,8 +5,10 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLStreamReader;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.payment.poc.config.ThreeCConfig;
 import com.payment.poc.helper.ThreeCHelper;
 import com.payment.poc.model.CreateTokenResult;
 import com.payment.poc.model.InitialiseResult;
@@ -15,6 +17,9 @@ import com.payment.poc.model.RefundResult;
 
 @Service
 public class ThreeCPaymentService {
+    
+    @Autowired 
+    ThreeCConfig config;
 
     /**
      * @description get ipg session
@@ -25,7 +30,7 @@ public class ThreeCPaymentService {
     public InitialiseResult getIpgSession(String merchantRef, String amount) {
         try {
             String url = "https://web2payuat.3cint.com/ipage/Service/_2006_05_v1_0_1/initialiseservice.asmx?WSDL";
-            String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?> <x:Envelope xmlns:x=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\"> <x:Header/> <x:Body> <tem:Initialise> <tem:security_emerchant_id>QikserveTest</tem:security_emerchant_id> <tem:security_validation_code>QikserveTest1</tem:security_validation_code> <tem:trx_merchant_reference>"
+            String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?> <x:Envelope xmlns:x=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\"> <x:Header/> <x:Body> <tem:Initialise> <tem:security_emerchant_id>"+config.getEMerchantId()+"</tem:security_emerchant_id> <tem:security_validation_code>"+config.getValidationCode()+"</tem:security_validation_code> <tem:trx_merchant_reference>"
                     + merchantRef
                     + "</tem:trx_merchant_reference> <tem:trx_amount_currency_code>GBP</tem:trx_amount_currency_code> <tem:trx_amount_value>"
                     + amount
@@ -70,7 +75,7 @@ public class ThreeCPaymentService {
     public PaymentResult pay(String merchantRef, String amount) throws Exception {
         try {
             String url = "https://web2payuat.3cint.com/mxg/service/_2011_02_v5_1_0/Token.asmx?op=CreateToken";
-            String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?> <soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"> <soap:Body> <CreateToken xmlns=\"http://web2pay.com/5.0/2009/11/5.1.0/\"> <eMerchantID>QikserveTest</eMerchantID> <ValidationCode>QikserveTest1</ValidationCode> <TokenSchemeID></TokenSchemeID> <TokenExpiryYYMM></TokenExpiryYYMM> <CardNumber>4111111111111103</CardNumber> <CardExpiryYYMM>2212</CardExpiryYYMM> <CardIssueYYMM></CardIssueYYMM> <CardIssueNo></CardIssueNo> <CardHolderAddress1>1281 West georgia</CardHolderAddress1> <CardHolderCity>Manchester</CardHolderCity> <CardHolderState>London</CardHolderState> <CardHolderPostalCode>SO140PN</CardHolderPostalCode> <CardHolderFirstName>Mohammad</CardHolderFirstName> <CardHolderLastName>Adil</CardHolderLastName> <MerchantRef>"
+            String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?> <soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"> <soap:Body> <CreateToken xmlns=\"http://web2pay.com/5.0/2009/11/5.1.0/\"> <eMerchantID>"+ config.getEMerchantId()+"</eMerchantID> <ValidationCode>"+ config.getValidationCode()+"</ValidationCode> <TokenSchemeID></TokenSchemeID> <TokenExpiryYYMM></TokenExpiryYYMM> <CardNumber>4111111111111103</CardNumber> <CardExpiryYYMM>2212</CardExpiryYYMM> <CardIssueYYMM></CardIssueYYMM> <CardIssueNo></CardIssueNo> <CardHolderAddress1>1281 West georgia</CardHolderAddress1> <CardHolderCity>Manchester</CardHolderCity> <CardHolderState>London</CardHolderState> <CardHolderPostalCode>SO140PN</CardHolderPostalCode> <CardHolderFirstName>Mohammad</CardHolderFirstName> <CardHolderLastName>Adil</CardHolderLastName> <MerchantRef>"
                     + merchantRef
                     + "</MerchantRef> <UserData1>nothing</UserData1> <UserData2>nothing</UserData2> <Online>True</Online> <OptionFlags>G</OptionFlags> </CreateToken> </soap:Body> </soap:Envelope>";
             String contentType = "text/xml; charset=utf-8";
@@ -96,7 +101,7 @@ public class ThreeCPaymentService {
                 
                 // Once token is generated , checking the authorization status
                 PaymentResult payment = ThreeCHelper.checkAuthorization(createTokenResult.getValue().getUserRef(),
-                        createTokenResult.getValue().getTokenNo(), amount);
+                        createTokenResult.getValue().getTokenNo(), amount, config);
                 return payment;
             } else {
                 throw new Exception();
@@ -118,7 +123,7 @@ public class ThreeCPaymentService {
 
         try {
             String url = "https://web2payuat.3cint.com/mxg/service/_2011_02_v5_1_0/Pay.asmx";
-            String xml = "<x:Envelope xmlns:x=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ns=\"http://web2pay.com/5.0/2009/11/5.0.0/\"> <x:Header/> <x:Body> <ns:ReverseByTxID> <ns:eMerchantID>QikserveTest</ns:eMerchantID> <ns:ValidationCode>QikserveTest1</ns:ValidationCode> <ns:TxID>"
+            String xml = "<x:Envelope xmlns:x=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ns=\"http://web2pay.com/5.0/2009/11/5.0.0/\"> <x:Header/> <x:Body> <ns:ReverseByTxID> <ns:eMerchantID>"+config.getEMerchantId()+"</ns:eMerchantID> <ns:ValidationCode>"+config.getValidationCode()+"</ns:ValidationCode> <ns:TxID>"
                     + txnId
                     + "</ns:TxID> <ns:OptionFlags>G</ns:OptionFlags> </ns:ReverseByTxID> </x:Body> </x:Envelope>";
 

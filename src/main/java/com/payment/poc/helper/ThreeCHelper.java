@@ -18,6 +18,7 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import com.payment.poc.config.ThreeCConfig;
 import com.payment.poc.model.GetStatusByMerchantRefResult;
 import com.payment.poc.model.PaymentResult;
 
@@ -104,10 +105,10 @@ public class ThreeCHelper {
      * @return payment result
      * @throws Exception
      */
-    public static PaymentResult checkAuthorization(String merchantRef, String token, String amount) throws Exception {
+    public static PaymentResult checkAuthorization(String merchantRef, String token, String amount, ThreeCConfig config) throws Exception {
         try {
             String url = "https://web2payuat.3cint.com/mxg/service/_2011_02_v5_1_0/Authorise.asmx";
-            String xml = "<x:Envelope xmlns:x=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ns=\"http://web2pay.com/5.0/2009/11/5.1.0/\"> <x:Header/> <x:Body> <ns:GetStatusByMerchantRef> <ns:eMerchantID>QikserveTest</ns:eMerchantID> <ns:ValidationCode>QikserveTest1</ns:ValidationCode> <ns:MerchantRef>"
+            String xml = "<x:Envelope xmlns:x=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ns=\"http://web2pay.com/5.0/2009/11/5.1.0/\"> <x:Header/> <x:Body> <ns:GetStatusByMerchantRef> <ns:eMerchantID>"+config.getEMerchantId()+"</ns:eMerchantID> <ns:ValidationCode>"+config.getValidationCode()+"</ns:ValidationCode> <ns:MerchantRef>"
                     + merchantRef
                     + "</ns:MerchantRef> <ns:OptionFlags>G</ns:OptionFlags> </ns:GetStatusByMerchantRef> </x:Body> </x:Envelope>";
             String contentType = "text/xml; charset=utf-8";
@@ -133,7 +134,7 @@ public class ThreeCHelper {
             
             // authorization is success , creating the payment transaction
             if (getAuthStatus.getValue().getReturnText().equalsIgnoreCase("APPROVED")) {
-                return createPayment(merchantRef, token, amount);
+                return createPayment(merchantRef, token, amount, config);
             } else {
                 throw new Exception(getAuthStatus.getValue().getReturnText());
             }
@@ -151,10 +152,10 @@ public class ThreeCHelper {
      * @return payment result
      * @throws Exception
      */
-    private static PaymentResult createPayment(String merchantRef, String token, String amount) throws Exception {
+    private static PaymentResult createPayment(String merchantRef, String token, String amount, ThreeCConfig config) throws Exception {
         try {
             String url = "https://web2payuat.3cint.com/mxg/service/_2011_02_v5_1_0/Pay.asmx";
-            String xml = "<x:Envelope xmlns:x=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ns=\"http://web2pay.com/5.0/2009/11/5.0.0/\"> <x:Header/> <x:Body> <ns:RequestNoCardRead> <ns:eMerchantID>QikserveTest</ns:eMerchantID> <ns:ValidationCode>QikserveTest1</ns:ValidationCode> <ns:PaymentOkUrl></ns:PaymentOkUrl> <ns:CardNumber>"
+            String xml = "<x:Envelope xmlns:x=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ns=\"http://web2pay.com/5.0/2009/11/5.0.0/\"> <x:Header/> <x:Body> <ns:RequestNoCardRead> <ns:eMerchantID>"+config.getEMerchantId()+"</ns:eMerchantID> <ns:ValidationCode>"+config.getValidationCode()+"</ns:ValidationCode> <ns:PaymentOkUrl></ns:PaymentOkUrl> <ns:CardNumber>"
                     + token
                     + "</ns:CardNumber> <ns:CardExpiryYYMM>2212</ns:CardExpiryYYMM> <ns:CardIssueYYMM></ns:CardIssueYYMM> <ns:CardIssueNo></ns:CardIssueNo> <ns:CardCvv2></ns:CardCvv2> <ns:CardHolderAddress1>1281 West Georgia</ns:CardHolderAddress1> <ns:CardHolderCity>Manchester</ns:CardHolderCity> <ns:CardHolderState>London</ns:CardHolderState> <ns:CardHolderPostalCode>SO140PN</ns:CardHolderPostalCode> <ns:CardHolderFirstName>Mohammad</ns:CardHolderFirstName> <ns:CardHolderLastName>Adil</ns:CardHolderLastName> <ns:Amount>"
                     + amount + "</ns:Amount> <ns:Currency>GBP</ns:Currency> <ns:MerchantRef>" + merchantRef
