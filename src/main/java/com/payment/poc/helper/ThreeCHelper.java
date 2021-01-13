@@ -190,4 +190,45 @@ public class ThreeCHelper {
             throw e;
         }
     }
+
+    public static PaymentResult getTxnDetails(String txnId, String amount, ThreeCConfig config) throws Exception {
+        
+        try {
+            String url = "https://web2payuat.3cint.com/mxg/service/_2011_02_v5_1_0/Authorise.asmx";
+            String xml = "<x:Envelope xmlns:x=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ns=\"http://web2pay.com/5.0/2009/11/5.1.0/\"> <x:Header/> <x:Body> <ns:GetStatusByTxID> <ns:eMerchantID>"+config.getEMerchantId()+"</ns:eMerchantID> <ns:ValidationCode>"+config.getValidationCode()+"</ns:ValidationCode> <ns:TxID>"
+                    + txnId
+                    + "</ns:TxID> <ns:OptionFlags>G</ns:OptionFlags> </ns:GetStatusByTxID> </x:Body> </x:Envelope>";
+            String contentType = "text/xml; charset=utf-8";
+            String soapAction = "http://web2pay.com/5.0/2009/11/5.1.0/GetStatusByTxID";
+            StringBuffer response = getXMLResponse(url, xml, contentType, soapAction, "POST");
+
+            XMLStreamReader xmlStreamReader = convertToXmlStream(response);
+
+            while (xmlStreamReader.hasNext()) {
+                if (xmlStreamReader.isStartElement()) {
+                    String name = xmlStreamReader.getLocalName();
+                    if (name.equalsIgnoreCase("GetStatusByTxIDResult")) {
+                        break;
+                    }
+                }
+                xmlStreamReader.next();
+            }
+
+            JAXBContext jxbContext = JAXBContext.newInstance(GetStatusByMerchantRefResult.class);
+            Unmarshaller unmarshaller = jxbContext.createUnmarshaller();
+            JAXBElement<GetStatusByMerchantRefResult> getAuthStatus = unmarshaller.unmarshal(xmlStreamReader,
+                    GetStatusByMerchantRefResult.class);
+            
+            // authorization is success , creating the payment transaction
+            if (getAuthStatus.getValue().getReturnText().equalsIgnoreCase("APPROVED")) {
+                
+                return createPayment(getAuthStatus.getValue().getMerchantRef(), getAuthStatus.getValue().getTokenNo(), amount, config);
+            } else {
+                throw new Exception(getAuthStatus.getValue().getReturnText());
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+            throw e;
+        }
+    }
 }

@@ -1,8 +1,5 @@
 package com.payment.poc.controller;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -10,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -59,6 +55,21 @@ public class ThreeCPaymentController {
         return new ResponseEntity<InitialiseResult>(response, HttpStatus.OK);
     }
 
+    @GetMapping(value = "initialiseWithToken/{merchantRef}/{amount}")
+    public ResponseEntity<InitialiseResult> intialiseWithToken(@PathVariable String merchantRef, @PathVariable String amount) {
+
+        InitialiseResult response = null;
+        try {
+            response = threeCService.getIpgSessionWithToken(merchantRef, amount);
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Something went wrong. Please try again later.", e);
+        }
+        return new ResponseEntity<InitialiseResult>(response, HttpStatus.OK);
+    }
+    
     @GetMapping(value = "pay/{merchantRef}/{amount}")
     public ResponseEntity<PaymentResult> createPayment(@PathVariable String merchantRef, @PathVariable String amount) throws Exception {
         PaymentResult response = null;
@@ -72,23 +83,19 @@ public class ThreeCPaymentController {
         }
         return new ResponseEntity<PaymentResult>(response, HttpStatus.OK);
     }
+    
+    @GetMapping(value = "payWithTxnId/{txnId}/{amount}")
+    public ResponseEntity<PaymentResult> payTxnId(@PathVariable String txnId, @PathVariable String amount) throws Exception {
+        PaymentResult response = null;
+        try {
+            response = threeCService.payWithTxnId(txnId, amount);
+        } catch (Exception e) {
+            e.printStackTrace();
 
-    @PostMapping(value = "success")
-    public void success(HttpServletRequest req, HttpServletResponse res) {
-
-        System.out.println("cc_response=>" + req.getParameterNames());
-        res.setHeader("Location", "localhost:4200/threecpay");
-        res.setStatus(302);
-        // do capture
-    }
-
-    @PostMapping(value = "failure")
-    public void failure(HttpServletRequest req, HttpServletResponse res) {
-
-        System.out.println("cc_response=>" + req.getParameterNames());
-        res.setHeader("Location", "localhost:4200/threecpay");
-        res.setStatus(302);
-        // do something
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Something went wrong. Please try again later.", e);
+        }
+        return new ResponseEntity<PaymentResult>(response, HttpStatus.OK);
     }
 
     @GetMapping(value = "reverse-capture/{txnId}")
