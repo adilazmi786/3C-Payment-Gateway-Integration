@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.payment.poc.config.ThreeCConfig;
+import com.payment.poc.constants.ThreeCEnum;
 import com.payment.poc.exception.APIException;
 import com.payment.poc.helper.ThreeCHelper;
 import com.payment.poc.model.CreateTokenResult;
@@ -31,7 +32,7 @@ public class ThreeCPaymentService {
 
         try {
             InitialiseResult initializeResult = ThreeCHelper._GetInitializedIpSession(merchantRef, amount, config);
-            if (initializeResult.getIpgResultText().equalsIgnoreCase("Success"))
+            if (initializeResult.getIpgResultText().equalsIgnoreCase(ThreeCEnum.Success.toString()))
                 return initializeResult;
             else {
                 throw new APIException(initializeResult.getIpgResultText() + " with Error code "
@@ -129,7 +130,7 @@ public class ThreeCPaymentService {
 
         try {
             InitialiseResult initializeResult = ThreeCHelper._GetIpgSessionWithToken(merchantRef, amount, config);
-            if (initializeResult.getIpgResultText().equalsIgnoreCase("Success"))
+            if (initializeResult.getIpgResultText().equalsIgnoreCase(ThreeCEnum.Success.toString()))
                 return initializeResult;
             else
                 throw new APIException(

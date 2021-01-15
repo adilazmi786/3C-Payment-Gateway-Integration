@@ -14,6 +14,9 @@ import lombok.Data;
 @Data
 public class CreateTokenResult implements Serializable {
 
+   
+    private static final long serialVersionUID = 1L;
+
     @XmlElement(name="TokenNo", namespace = "http://sixcardsolutions.com/W2P/Front/Entity/2009/05/5.1.0")
     private String tokenNo;
     

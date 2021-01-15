@@ -20,6 +20,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import com.payment.poc.config.ThreeCConfig;
+import com.payment.poc.constants.ThreeCEnum;
 import com.payment.poc.exception.APIException;
 import com.payment.poc.model.CreateTokenResult;
 import com.payment.poc.model.GetStatusByMerchantRefResult;
@@ -140,7 +141,7 @@ public class ThreeCHelper {
                     GetStatusByMerchantRefResult.class);
 
             // authorization is success , creating the payment transaction
-            if (getAuthStatus.getValue().getReturnText().equalsIgnoreCase("APPROVED")) {
+            if (getAuthStatus.getValue().getReturnText().equalsIgnoreCase(ThreeCEnum.APPROVED.toString())) {
                 return createPayment(merchantRef, token, amount, config);
             } else {
                 throw new APIException(getAuthStatus.getValue().getReturnText());
@@ -229,12 +230,12 @@ public class ThreeCHelper {
                 GetStatusByMerchantRefResult.class);
 
         // authorization is success , creating the payment transaction
-        if (getAuthStatus.getValue().getReturnText().equalsIgnoreCase("APPROVED")) {
+        if (getAuthStatus.getValue().getReturnText().equalsIgnoreCase(ThreeCEnum.APPROVED.toString())) {
 
             return createPayment(getAuthStatus.getValue().getMerchantRef(), getAuthStatus.getValue().getTokenNo(),
                     amount, config);
         } else {
-            throw new APIException(getAuthStatus.getValue().getReturnText());
+            throw new APIException(getAuthStatus.getValue().getReturnText() +" with error code "+ getAuthStatus.getValue().getReturnCode());
         }
 
     }
