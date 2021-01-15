@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.payment.poc.config.ThreeCConfig;
+import com.payment.poc.exception.APIException;
 import com.payment.poc.helper.ThreeCHelper;
 import com.payment.poc.model.CreateTokenResult;
 import com.payment.poc.model.InitialiseResult;
@@ -29,7 +30,8 @@ public class ThreeCPaymentService {
      * @param amount
      * @return ipgsession
      */
-    public InitialiseResult getIpgSession(String merchantRef, String amount) {
+    public InitialiseResult getIpgSession(String merchantRef, String amount) throws APIException, Exception {
+
         try {
             String url = "https://web2payuat.3cint.com/ipage/Service/_2006_05_v1_0_1/initialiseservice.asmx?WSDL";
             String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?> <x:Envelope xmlns:x=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\"> <x:Header/> <x:Body> <tem:Initialise> <tem:security_emerchant_id>"
@@ -42,7 +44,7 @@ public class ThreeCPaymentService {
 
             String contentType = "text/xml; charset=utf-8";
             String soapAction = "http://tempuri.org/Initialise";
-            StringBuffer response = ThreeCHelper.getXMLResponse(url, xml, contentType, soapAction, "POST");
+            StringBuffer response = ThreeCHelper.getXMLResponse(url, xml, contentType, soapAction, "GET");
 
             XMLStreamReader xmlStreamReader = ThreeCHelper.convertToXmlStream(response);
             while (xmlStreamReader.hasNext()) {
@@ -60,12 +62,15 @@ public class ThreeCPaymentService {
             Unmarshaller unmarshaller = jxbContext.createUnmarshaller();
             JAXBElement<InitialiseResult> initializeResult = unmarshaller.unmarshal(xmlStreamReader,
                     InitialiseResult.class);
-            return initializeResult.getValue();
-
+            if (initializeResult.getValue().getIpgResultText().equalsIgnoreCase("Success"))
+                return initializeResult.getValue();
+            else {
+                throw new APIException(initializeResult.getValue().getIpgResultText() + " with Error code "
+                        + initializeResult.getValue().getIpgResultCode());
+            }
         } catch (Exception e) {
-            System.out.println(e);
+            throw e;
         }
-        return null;
 
     }
 
@@ -110,11 +115,11 @@ public class ThreeCPaymentService {
                         createTokenResult.getValue().getTokenNo(), amount, config);
                 return payment;
             } else {
-                throw new Exception();
+                throw new APIException(createTokenResult.getValue().getReturnText() + " with error code: "
+                        + createTokenResult.getValue().getReturnCode());
             }
 
         } catch (Exception e) {
-            System.out.println(e);
             throw e;
         }
     }
@@ -125,7 +130,7 @@ public class ThreeCPaymentService {
      * @return Refund Result
      * @throws Exception
      */
-    public RefundResult reverseCapture(String txnId) throws Exception {
+    public RefundResult reverseCapture(String txnId) throws APIException, Exception {
 
         try {
             String url = "https://web2payuat.3cint.com/mxg/service/_2011_02_v5_1_0/Pay.asmx";
@@ -156,15 +161,15 @@ public class ThreeCPaymentService {
             if (refund.getValue().getReturnCode().equalsIgnoreCase("0")) {
                 return refund.getValue();
             } else {
-                throw new Exception(refund.getValue().getReturnCode());
+                throw new APIException(
+                        refund.getValue().getReturnText() + " with error code " + refund.getValue().getReturnCode());
             }
         } catch (Exception e) {
-            System.out.println(e);
             throw e;
         }
     }
 
-    public String ipageLoad(String ipgSession) {
+    public String ipageLoad(String ipgSession) throws Exception {
         try {
             String url = "https://web2payuat.3cint.com/iPage/Service/_2006_05_v1_0_1/service.aspx";
             String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <x:Envelope xmlns:x=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\"> <x:Header /> <x:Body> <tem:Initialise>  <tem:trx_merchant_reference>"
@@ -179,24 +184,19 @@ public class ThreeCPaymentService {
             StringBuffer response = ThreeCHelper.getXMLResponse(url, xml, contentType, soapAction, "POST");
             return response.toString();
         } catch (Exception e) {
-            System.out.println(e);
-        }
-        return null;
-    }
-
-    public PaymentResult payWithTxnId(String txnId, String amount) throws Exception {
-        try {
-            PaymentResult payment = ThreeCHelper.getTxnDetails(txnId, amount, config);
-            return payment;
-        } catch (Exception e) {
-            e.printStackTrace();
             throw e;
         }
     }
 
+    public PaymentResult payWithTxnId(String txnId, String amount) throws APIException, Exception {
+
+        PaymentResult payment = ThreeCHelper.getTxnDetails(txnId, amount, config);
+        return payment;
+    }
+
     public InitialiseResult getIpgSessionWithToken(String merchantRef, String amount) {
-        UUID uuid=UUID.randomUUID();
-        
+        UUID uuid = UUID.randomUUID();
+
         try {
             String url = "https://web2payuat.3cint.com/ipage/Service/_2006_05_v1_0_1/initialiseservice.asmx?WSDL";
             String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?> <x:Envelope xmlns:x=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\"> <x:Header/> <x:Body> <tem:InitialiseWithToken> <tem:security_emerchant_id>"
@@ -205,7 +205,9 @@ public class ThreeCPaymentService {
                     + merchantRef
                     + "</tem:trx_merchant_reference> <tem:trx_amount_currency_code>GBP</tem:trx_amount_currency_code> <tem:trx_amount_value>"
                     + amount + "</tem:trx_amount_value><tem:template_id>" + config.getTemplateId()
-                    + "</tem:template_id> <tem:posturl_success>http://localhost:4200/threecpay/authorise</tem:posturl_success> <tem:posturl_failure>http://localhost:4200/threecpay/authorise</tem:posturl_failure> <tem:service_action>InitialiseWithToken</tem:service_action> <tem:token_no>?</tem:token_no> "+uuid +"<tem:token_injection_action></tem:token_injection_action> <tem:trx_options>G</tem:trx_options> </tem:InitialiseWithToken> </x:Body> </x:Envelope>";
+                    + "</tem:template_id> <tem:posturl_success>http://localhost:4200/threecpay/authorise</tem:posturl_success> <tem:posturl_failure>http://localhost:4200/threecpay/authorise</tem:posturl_failure> <tem:service_action>InitialiseWithToken</tem:service_action> <tem:token_no>?</tem:token_no> "
+                    + uuid
+                    + "<tem:token_injection_action></tem:token_injection_action> <tem:trx_options>G</tem:trx_options> </tem:InitialiseWithToken> </x:Body> </x:Envelope>";
 
             String contentType = "text/xml; charset=utf-8";
             String soapAction = "http://tempuri.org/InitialiseWithToken";
@@ -233,7 +235,7 @@ public class ThreeCPaymentService {
             System.out.println(e);
         }
         return null;
-        
+
     }
 
 }

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.payment.poc.exception.APIException;
 import com.payment.poc.model.InitialiseResult;
 import com.payment.poc.model.PaymentResult;
 import com.payment.poc.model.RefundResult;
@@ -26,89 +27,51 @@ public class ThreeCPaymentController {
     ThreeCPaymentService threeCService;
 
     @GetMapping(value = "ipage", produces = MediaType.TEXT_HTML_VALUE)
-    public ResponseEntity<String> ipageLoad(@RequestParam(value="ipgSession") String ipgSession) {
+    public ResponseEntity<String> ipageLoad(@RequestParam(value = "ipgSession") String ipgSession) throws Exception {
 
-        String response = null;
-        try {
-            response = threeCService.ipageLoad(ipgSession);
-        } catch (Exception e) {
-            e.printStackTrace();
+        String response = threeCService.ipageLoad(ipgSession);
 
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Something went wrong. Please try again later.", e);
-        }
         return new ResponseEntity<String>(response, HttpStatus.OK);
     }
 
     @GetMapping(value = "initialise/{merchantRef}/{amount}")
-    public ResponseEntity<InitialiseResult> intialise(@PathVariable String merchantRef, @PathVariable String amount) {
+    public ResponseEntity<InitialiseResult> intialise(@PathVariable String merchantRef, @PathVariable String amount)
+            throws APIException,Exception {
 
-        InitialiseResult response = null;
-        try {
-            response = threeCService.getIpgSession(merchantRef, amount);
-        } catch (Exception e) {
-            e.printStackTrace();
+        InitialiseResult response = threeCService.getIpgSession(merchantRef, amount);
 
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Something went wrong. Please try again later.", e);
-        }
         return new ResponseEntity<InitialiseResult>(response, HttpStatus.OK);
     }
 
     @GetMapping(value = "initialiseWithToken/{merchantRef}/{amount}")
-    public ResponseEntity<InitialiseResult> intialiseWithToken(@PathVariable String merchantRef, @PathVariable String amount) {
+    public ResponseEntity<InitialiseResult> intialiseWithToken(@PathVariable String merchantRef,
+            @PathVariable String amount) throws APIException {
 
-        InitialiseResult response = null;
-        try {
-            response = threeCService.getIpgSessionWithToken(merchantRef, amount);
-        } catch (Exception e) {
-            e.printStackTrace();
+        InitialiseResult response = threeCService.getIpgSessionWithToken(merchantRef, amount);
 
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Something went wrong. Please try again later.", e);
-        }
         return new ResponseEntity<InitialiseResult>(response, HttpStatus.OK);
     }
-    
-    @GetMapping(value = "pay/{merchantRef}/{amount}")
-    public ResponseEntity<PaymentResult> createPayment(@PathVariable String merchantRef, @PathVariable String amount) throws Exception {
-        PaymentResult response = null;
-        try {
-            response = threeCService.pay(merchantRef, amount);
-        } catch (Exception e) {
-            e.printStackTrace();
 
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Something went wrong. Please try again later.", e);
-        }
+    @GetMapping(value = "pay/{merchantRef}/{amount}")
+    public ResponseEntity<PaymentResult> createPayment(@PathVariable String merchantRef, @PathVariable String amount)
+            throws Exception {
+
+        PaymentResult response = threeCService.pay(merchantRef, amount);
+
         return new ResponseEntity<PaymentResult>(response, HttpStatus.OK);
     }
-    
-    @GetMapping(value = "payWithTxnId/{txnId}/{amount}")
-    public ResponseEntity<PaymentResult> payTxnId(@PathVariable String txnId, @PathVariable String amount) throws Exception {
-        PaymentResult response = null;
-        try {
-            response = threeCService.payWithTxnId(txnId, amount);
-        } catch (Exception e) {
-            e.printStackTrace();
 
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Something went wrong. Please try again later.", e);
-        }
+    @GetMapping(value = "payWithTxnId/{txnId}/{amount}")
+    public ResponseEntity<PaymentResult> payTxnId(@PathVariable String txnId, @PathVariable String amount)
+            throws APIException, Exception {
+        PaymentResult response = threeCService.payWithTxnId(txnId, amount);
         return new ResponseEntity<PaymentResult>(response, HttpStatus.OK);
     }
 
     @GetMapping(value = "reverse-capture/{txnId}")
-    public ResponseEntity<RefundResult> reverseCapture(@PathVariable String txnId) throws Exception {
-        RefundResult response = null;
-        try {
-            response = threeCService.reverseCapture(txnId);
-        } catch (Exception e) {
-            e.printStackTrace();
+    public ResponseEntity<RefundResult> reverseCapture(@PathVariable String txnId) throws APIException, Exception {
 
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Something went wrong. Please try again later.", e);
-        }
+        RefundResult response = threeCService.reverseCapture(txnId);
         return new ResponseEntity<RefundResult>(response, HttpStatus.OK);
     }
 
