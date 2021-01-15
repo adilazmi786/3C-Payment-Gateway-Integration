@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.payment.poc.exception.APIException;
+import com.payment.poc.model.CreateTokenResult;
 import com.payment.poc.model.InitialiseResult;
 import com.payment.poc.model.PaymentResult;
 import com.payment.poc.model.RefundResult;
@@ -45,7 +45,7 @@ public class ThreeCPaymentController {
 
     @GetMapping(value = "initialiseWithToken/{merchantRef}/{amount}")
     public ResponseEntity<InitialiseResult> intialiseWithToken(@PathVariable String merchantRef,
-            @PathVariable String amount) throws APIException {
+            @PathVariable String amount) throws APIException,Exception {
 
         InitialiseResult response = threeCService.getIpgSessionWithToken(merchantRef, amount);
 
@@ -61,6 +61,15 @@ public class ThreeCPaymentController {
         return new ResponseEntity<PaymentResult>(response, HttpStatus.OK);
     }
 
+    @GetMapping(value = "createToken/{merchantRef}")
+    public ResponseEntity<CreateTokenResult> createToken(@PathVariable String merchantRef)
+            throws APIException,Exception {
+
+        CreateTokenResult response = threeCService.createToken(merchantRef);
+
+        return new ResponseEntity<CreateTokenResult>(response, HttpStatus.OK);
+    }
+    
     @GetMapping(value = "payWithTxnId/{txnId}/{amount}")
     public ResponseEntity<PaymentResult> payTxnId(@PathVariable String txnId, @PathVariable String amount)
             throws APIException, Exception {
