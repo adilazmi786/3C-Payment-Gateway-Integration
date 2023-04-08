@@ -1,2 +1,2 @@
-# payment-gateway-poc
-Implemented basic api flow
+# 3C payment-gateway-integration
+3C Payment Gateway integration
